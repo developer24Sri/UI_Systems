@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Nested Navbar</title>
+    <style>
+        * {
+            padding: 0px;
+            margin: 0px;
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: none;
+            color: white;
+        }
+
+        img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            background-color: #2C8EEC;
+            color: white;
+            justify-content: space-between;
+            padding: 10px 15px;
+        }
+
+        .left-nav {
+            display: flex;
+            align-items: center;
+        }
+
+        .left-nav .search-bar {
+            margin-right: auto;
+            margin-left: 10px;
+            position: relative;
+            cursor: pointer;
+            width: auto;
+        }
+
+        .left-nav .search-bar .search-query {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            outline: transparent;
+            background-color: transparent;
+            color: transparent;
+            font-size: 0.9rem;
+            -webkit-transition: all 0.8s;
+            transition: all 0.8s;
+            margin-bottom: 0;
+        }
+
+        .left-nav .search-bar .search-query::placeholder {
+            color: transparent;
+            -webkit-transition: all 0.8s;
+            transition: all 0.8s;
+        }
+
+        .left-nav .search-bar .search-query:focus {
+            border-radius: 50px;
+            border: 2px solid white;
+            background-color: white;
+            width: if(media(min-width: 992px): 350px; else: 40vw);
+            color: black;
+        }
+
+        .left-nav .search-bar .search-query:focus::placeholder {
+            color: black;
+        }
+
+        .left-nav .search-bar button {
+            border: 0;
+            background: none;
+            padding: 0;
+            width: auto;
+            position: relative;
+            top: 2px;
+            left: -24px;
+            border-radius: 3px;
+        }
+
+        .left-nav .search-bar button svg {
+            color: white;
+        }
+
+        .left-nav .search-bar .search-query:focus ~ button svg path {
+            fill: black;
+        }
+
+        .hamburger {
+            width: 22px;
+            height: 2.2px;
+            background-color: white;
+            cursor: pointer;
+            position: relative;
+            display: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .hamburger::before,
+        .hamburger::after {
+            content: "";
+            width: inherit;
+            height: inherit;
+            background-color: inherit;
+            position: absolute;
+            transition: transform 0.3s ease, top 0.3s ease;
+        }
+
+        .hamburger::before {
+            top: -7px;
+        }
+
+        .hamburger::after {
+            top: 7px;
+        }
+
+        .navlinks {
+            display: flex;
+            gap: 15px;
+        }
+
+        @media (max-width: 992px) {
+            nav {
+                flex-direction: column;
+                position: relative;
+            }
+
+            .hamburger {
+                display: block;
+            }
+
+            .hamburger.active {
+                background-color: transparent;
+            }
+
+            .hamburger.active::before {
+                top: 0;
+                transform: rotate(45deg);
+                background-color: white;
+            }
+
+            .hamburger.active::after {
+                top: 0;
+                transform: rotate(-45deg);
+                background-color: white;
+            }
+
+            .left-nav {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+            }
+
+            .navlinks {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                position: absolute;
+                top: 100%;
+                background-color: inherit;
+                width: 100%;
+                max-height: 0px;
+                opacity: 0;
+                overflow: hidden;
+                transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out, padding 0.4s ease-in-out;
+            }
+
+            .show {
+                max-height: 200px;
+                opacity: 1;
+                padding: 15px 0px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="left-nav">
+            <h2>LOGO</h2>
+            <div class="search-bar">
+                <input type="text" name="search" class="search-query" placeholder="Search..." />
+                <button type="button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" class="search_icon"><path fill="#ffffff" d="M12.9 14.32a8 8 0 1 1 1.41-1.41l5.35 5.33l-1.42 1.42l-5.33-5.34zM8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12z"/></svg>
+                    <input type="search" style="display: none;">
+                </button>
+            </div>
+            <div class="hamburger"></div>
+        </div>
+        <div class="navlinks">
+            <a href="#">Home</a>
+            <a href="#">About</a>
+            <a href="#">Contact Us</a>
+            <a href="#">Services</a>
+        </div>
+    </nav>
+    <section>
+        hello
+    </section>
+</body>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Responsive:
+        const navlinks = document.querySelector(".navlinks")
+        const hamburger = document.querySelector(".hamburger");
+        hamburger.addEventListener("click", () => {
+            navlinks.classList.toggle("show");
+            hamburger.classList.toggle("active");
+        })
+        //outside click to close the navlinks:
+        document.addEventListener("click", () => {
+            if (!navlinks.contains(event.target) && !hamburger.contains(event.target)) {
+                navlinks.classList.remove("show");
+                hamburger.classList.remove("active");
+            }
+        })
+        // focus for search:
+        const customSerach = document.querySelector(".search-bar");
+        const searchQuery  = document.querySelector(".search-query");
+        if(customSerach && searchQuery) {
+            customSerach.addEventListener("click", function() {
+                searchQuery.focus();
+            })
+        }
+    })
+</script>
+
+</html>
