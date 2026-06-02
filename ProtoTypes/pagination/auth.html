@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Auth Pagination</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            width: 300px;
+            margin: 100px auto;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .tabs button {
+            flex: 1;
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        input {
+            width: 100%;
+            padding: 6px;
+            margin-bottom: 10px;
+        }
+
+        button.submit {
+            width: 100%;
+            padding: 8px;
+        }
+
+        .message {
+            margin-top: 10px;
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="tabs">
+            <button id="loginTab">Login</button>
+            <button id="registerTab">Register</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form id="loginForm">
+            <input type="text" id="loginUsername" placeholder="Username" required />
+            <input type="password" id="loginPassword" placeholder="Password" required />
+            <button type="submit" class="submit">Login</button>
+        </form>
+
+        <!-- REGISTER FORM -->
+        <form id="registerForm" class="hidden">
+            <input type="text" id="registerUsername" placeholder="Username" required minlength="3" />
+            <input type="email" id="registerEmail" placeholder="Email" required />
+            <input type="password" id="registerPassword" placeholder="Password" required minlength="6" />
+            <button type="submit" class="submit">Register</button>
+        </form>
+
+        <div class="message" id="message"></div>
+
+    </div>
+
+    <script type="module">
+        import { login, register } from "./js/auth.js";
+
+        const loginTab = document.getElementById("loginTab");
+        const registerTab = document.getElementById("registerTab");
+
+        const loginForm = document.getElementById("loginForm");
+        const registerForm = document.getElementById("registerForm");
+
+        const message = document.getElementById("message");
+
+        loginTab.addEventListener("click", () => {
+            loginForm.classList.remove("hidden");
+            registerForm.classList.add("hidden");
+            message.textContent = "";
+        });
+
+        registerTab.addEventListener("click", () => {
+            registerForm.classList.remove("hidden");
+            loginForm.classList.add("hidden");
+            message.textContent = "";
+        });
+
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const username = loginUsername.value.trim();
+            const password = loginPassword.value.trim();
+
+            if (!username || !password) {
+                message.textContent = "All fields required.";
+                return;
+            }
+
+            try {
+                await login(username, password);
+                message.style.color = "green";
+                message.textContent = "Login successful.";
+
+            } catch (err) {
+                message.style.color = "red";
+                message.textContent = err.message;
+            }
+        });
+
+
+        registerForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const username = registerUsername.value.trim();
+            const email = registerEmail.value.trim();
+            const password = registerPassword.value.trim();
+
+            if (username.length < 3) {
+                message.textContent = "Username too short.";
+                return;
+            }
+
+            if (password.length < 6) {
+                message.textContent = "Password too short.";
+                return;
+            }
+
+            try {
+                const msg = await register(username,email,password);
+                message.style.color = "green";
+                message.textContent = msg.message;
+            } catch (err) {
+                message.style.color = "red";
+                message.textContent = err.message;
+            }
+        });
+    </script>
+
+</body>
+
+</html>

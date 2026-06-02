@@ -1,0 +1,49 @@
+to setup an full stack system with mysql and php these are the steps to be get followed based on our service.js file,
+
+NOTES:
+* we gone always keep accessToken as in memory(bcos when the page closes or tab refresh or browser closes the memory will be cleaned) and refreshToken as httpcookie only bcos if we store accesstoken in localstorage it may leads to XSS (Cross Site Scripting) and 
+* always after creating the required DB and tables setup the very basic things that always gone repeat they are,
+ auth(login, register, refresh and logout),
+ config(db.php and config.php),
+ middlewares(will be expand but first thing will be verify.php),
+ JS(UI logic and API communictions),
+ protected(if we have any API connections which requires user to always logged in),
+ token.js(if we using in-memory access token)
+ service.js(central API layer)
+
+
+i) Create an DataBase and use it:
+CREATE DATABASE employee_management; and USE employee_management;
+
+ii) create the required tables:
+1. users table:
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('admin','user') DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+2. refresh_tokens(hashed):
+CREATE TABLE refresh_tokens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    token_hash VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE
+);
+
+iii) Start creating the basic folders and files required
+
+iv) Create db.php, config.php and jwt.php
+
+v) Create register.php and login.php
+
+
+
+

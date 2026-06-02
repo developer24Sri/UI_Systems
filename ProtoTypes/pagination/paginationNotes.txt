@@ -1,0 +1,117 @@
+everytime when we start creating our UI component as like this,
+initialState -> API -> Render -> Events
+
+i) so we do a basic seperation as dashboard.js and pagination.js:
+first of hear where pagination will only does fetch employees, renders table pagination page changes, search, sorting delete update and etc i.e everything related to the employees table stays hear
+secondary dashboard is like an page controller its job is the load the dashboard, create employeeTable, initilize employeeTable and connect components together that's all where it should not know how API works, how pagination works or table renders bcos today we render this employee table hear but in near future we may encounter notification panel or an profile widget or statitics cards or charts if everyting lives in dashboard it eventally becomes an hive of functionalities 
+
+ii) Pagination.js:
+as mentioned top of the page we need to first set an initialState then get the API's(internal/external) and the features thats it so this how a starting point looks like,
+export class EmployeeTable {
+    #currentPage = 1;
+    #limit = 5;
+
+    constructor({
+        tableBody,
+        paginationContainer
+    }) {
+        this.tableBody = document.querySelector(tableBody);
+        this.paginationContainer = document.querySelector(paginationContainer);
+    }
+    async init() {
+        console.log("Employee Table Initialized");
+    }
+}
+where we just set the initial values and class names that's all
+in dashboard.js same as we disccuseed this page only loads the things what we have done 
+import { EmployeeTable } from "./pagination.js";
+
+const table = new EmployeeTable({
+    tableBody: "#employeeTableBody",
+    paginationContainer: "#paginationContainer"
+})
+
+table.init();
+
+iii) pagination.js
+now as we seted the basic things according to our template we move to API,
+import { apiService } from "./service.js";
+
+export class EmployeeTable {
+    #currentPage = 1;
+    #limit = 5;
+
+    #employees = [];
+    #pagination = {};
+
+    constructor({
+        tableBody,
+        paginationContainer
+    }) {
+        this.tableBody = document.querySelector(tableBody);
+        this.paginationContainer = document.querySelector(paginationContainer);
+    }
+
+    async init() {
+        await this.loadEmployees();
+    }
+
+    async loadEmployees() {
+        const response = await apiService.get(`/protected/employees-show.php?page=${this.#currentPage}&limit=${this.#limit}`)
+        console.log(response);
+    }
+}
+
+iv) so API's are ready then we just need to render the data,
+import { apiService } from "./service.js";
+
+export class EmployeeTable {
+    // 1.set your initialStates
+    #currentPage = 1;
+    #limit = 5;
+
+    #employees = [];
+    #pagination = {};
+
+    constructor({
+        tableBody,
+        paginationContainer
+    }) {
+        // 2. Get the required data's Via API(internal i.e JS)
+        this.tableBody = document.querySelector(tableBody);
+        this.paginationContainer = document.querySelector(paginationContainer);
+    }
+
+    async init() {
+        await this.loadEmployees();
+        this.renderTable();
+    }
+
+    async loadEmployees() {
+        // 2. Get the required data's Via API(external)
+        const response = await apiService.get(`/protected/employees-show.php?page=${this.#currentPage}&limit=${this.#limit}`)
+        this.#employees = response.data;
+        this.#pagination = response.pagination;
+        console.log(this.#employees);
+        console.log(this.#pagination);
+    }
+
+    renderTable() {
+        // console.log(this.#employees);
+        this.tableBody.innerHTML = "";
+        this.#employees.forEach(employee => {
+            this.tableBody.insertAdjacentHTML(
+                "beforeend",
+            `
+            <tr>
+            <td>${employee.id}</td>
+            <td>${employee.employee_id}</td>
+            <td>${employee.name}</td>
+            <td>${employee.department}</td>
+            </tr>
+            `)
+        })
+    }
+}
+
+so now know why we are doing lie this way i.e API -> loadEmployees() -> storing it as state -> renderTable() without directely doing API -> renderTable() bcos later we will be having deleteEmployee, SearchEmployee, SortEmployee, UpdateEmployee like this so on so if we keep the data as state like this this.#employee and simply call it using this.renderTable() thats all
