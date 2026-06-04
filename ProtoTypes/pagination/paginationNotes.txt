@@ -170,3 +170,59 @@ JS:
         }
     }
 where you can able to see once the loop ends we just assigning the current page an class active and adding it in the button render
+
+viii) Another important concept we gone start is that enabling firtpage and lastPage buttons for the pagination what we have so for that we doesnt want to create any seperate function's for all it's not required also so 
+as we have bindEvents inside it itself we can select the class names and do the required functionalities 
+bindEvents() {
+        this.paginationContainer.addEventListener("click", async (event) => {
+            const button = event.target.closest(".page-btn");
+            const firstButton = event.target.closest(".pagination-first");
+            const prevButton = event.target.closest(".pagination-prev");
+            const lastButton = event.target.closest(".pagination-last");
+            const nextButton = event.target.closest(".pagination-next");
+            if (
+                nextButton &&
+                this.#currentPage < this.#pagination.totalPages
+            ) {
+                await this.handlePageChange(
+                    this.#currentPage + 1
+                );
+
+                return;
+            }
+
+            if (
+                prevButton &&
+                this.#currentPage > 1
+            ) {
+                await this.handlePageChange(
+                    this.#currentPage - 1
+                );
+
+                return;
+            }
+
+            if(firstButton) {
+                await this.handlePageChange(1);
+                return;
+            }
+
+            if(lastButton) {
+                await this.handlePageChange(this.#pagination.totalPages);
+                return;
+            }
+            if (!button) return;
+            const page = Number(button.dataset.page);
+            await this.handlePageChange(page);
+        })
+    }
+where you can able to see how we handled our 4 buttons only with our own states #currentPage and #pagination.totalPages itself
+
+ix) now we gone start with data summary of the record what we gone have i.e we need to show it to the user 1 to 5 records of 25 records like this so where as each time when we move to the next page we need to rendender the table based on it beofre that with using the given states we need to get the startingText and endingText i.e 1 to 5 or 6 to 10 or 11 to 15 like this so to do that we need an formula for both which is,
+renderSummary() {
+        const startText = ((this.#currentPage - 1) * this.#limit) + 1;
+        const endText = Math.min(this.#currentPage * this.#limit, this.#pagination.totalRecords);
+        this.summaryContainer.textContent = `Showing ${startText} to ${endText} from ${this.#pagination.totalRecords} records.`
+    }
+    
+so by doing not only we need to add in the init also at the handlePageChange(page) also so that only based on the page number the record will update 
