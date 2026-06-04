@@ -1,9 +1,9 @@
 everytime when we start creating our UI component as like this,
-initialState -> API -> Render -> Events
+bindEvents(v) -> initialState(i) -> API(ii) -> Render(iii) -> Events(iv)
 
 i) so we do a basic seperation as dashboard.js and pagination.js:
 first of hear where pagination will only does fetch employees, renders table pagination page changes, search, sorting delete update and etc i.e everything related to the employees table stays hear
-secondary dashboard is like an page controller its job is the load the dashboard, create employeeTable, initilize employeeTable and connect components together that's all where it should not know how API works, how pagination works or table renders bcos today we render this employee table hear but in near future we may encounter notification panel or an profile widget or statitics cards or charts if everyting lives in dashboard it eventally becomes an hive of functionalities 
+secondary dashboard is like an page controller its job is the load the dashboard, create employeeTable, initilize employeeTable and connect components together that's all where it should not know how API works, how pagination works or table renders bcos today we render this employee table hear but in near future we may encounter notification panel or an profile widget or statitics cards or charts if everyting lives in dashboard it eventally becomes an mess of functionalities 
 
 ii) Pagination.js:
 as mentioned top of the page we need to first set an initialState then get the API's(internal/external) and the features thats it so this how a starting point looks like,
@@ -34,7 +34,7 @@ const table = new EmployeeTable({
 table.init();
 
 iii) pagination.js
-now as we seted the basic things according to our template we move to API,
+now as we set the basic things according to our template we move to API,
 import { apiService } from "./service.js";
 
 export class EmployeeTable {
@@ -114,4 +114,59 @@ export class EmployeeTable {
     }
 }
 
-so now know why we are doing lie this way i.e API -> loadEmployees() -> storing it as state -> renderTable() without directely doing API -> renderTable() bcos later we will be having deleteEmployee, SearchEmployee, SortEmployee, UpdateEmployee like this so on so if we keep the data as state like this this.#employee and simply call it using this.renderTable() thats all
+so now know why we are doing like this way i.e API -> loadEmployees() -> storing it as state -> renderTable() without directely doing API -> renderTable() bcos later we will be having deleteEmployee, SearchEmployee, SortEmployee, UpdateEmployee like this and so on so if we keep the data as state like this this.#employee and simply call it using this.renderTable() thats all
+
+v) as we rendered the table next is the pagination only as you would have noticed the table data's what we get are arrofobj's where as the pagination are in an obj so as the name of the components itself says page we just need page numbers of the API which is in our case 5 so then in our UI we need to initilize if from 1 to 5 right so see this,
+    renderPagination() {
+        // 4. render the pagination below the table
+        // console.log(this.#pagination);
+        this.paginationContainer.innerHTML = "";
+        for (let i = 1; i <= this.#pagination.totalPages; i++) {
+            this.paginationContainer.insertAdjacentHTML(
+                "beforeend",
+                `<button class="page-btn" data-page="${i}">${i}</button>`
+            )
+        }
+    }
+as you could see using an simple for loop we had came accross an pagination required buttons so next is there functionality 
+
+vi) where hear as an part of the scalable components we would have seen in the starting of this notes first there will be bindEvents only bcos according to our code we first get through the init -> bindEvents(Register all user interactions) -> loadEmployees(fetch data) -> renderTable(Draw the rows) -> renderPagination(draw page buttons) -> handlePageChange(business logic for changing pages). but we start with loadEmployees only to see the UI but comming to business logic stage even though it is at 5th position we need to initlize it first so that it will register what are the events gone happen
+async handlePageChange(page) {
+        this.#currentPage = page;
+        await this.loadEmployees();
+        this.renderTable();
+        this.renderPagination();
+    }
+
+    // 5 ii) just click the button get the dataset from the button and send it to the handlePage
+    bindEvents() {
+        this.paginationContainer.addEventListener("click", async(event) => {
+            const button = event.target.closest(".page-btn");
+            if(!button) return;
+            const page = Number(button.dataset.page);
+            await this.handlePageChange(page);
+        })
+    }
+and in the init() call the bindEvents() before of all the other's
+
+vii) Active and in-active:
+which is one of an important topic which will be following everywhere in our component creating phases where as we already done the required this time just we need to do a CSS class saying what style should be applied for the active class that's all other than a small logic in the renderPagintion itself 
+CSS:
+ .page-btn.active {
+            background-color: white;
+            color: black;
+            border: 1px solid black;
+        }
+JS:
+    renderPagination() {
+        // console.log(this.#pagination);
+        this.paginationContainer.innerHTML = "";
+        for (let i = 1; i <= this.#pagination.totalPages; i++) {
+            const activeClass = i === this.#currentPage ? "active" : "";
+            this.paginationContainer.insertAdjacentHTML(
+                "beforeend",
+                `<button class="page-btn ${activeClass}" data-page="${i}">${i}</button>`
+            )
+        }
+    }
+where you can able to see once the loop ends we just assigning the current page an class active and adding it in the button render

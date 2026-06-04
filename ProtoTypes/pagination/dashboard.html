@@ -1,10 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pagination</title>
+    <style>
+        /* reset */
+        * {
+            padding: 0px;
+            margin: 0px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+            font: inherit;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        #paginationContainer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-btn {
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: black;
+            color: white;
+            border: 1px solid transparent;
+        }
+
+        .page-btn.active {
+            background-color: transparent;
+            color: black;
+            border: 1px solid black;
+        }
+
+        .pagination-prev,
+        .pagination-first,
+        .pagination-next,
+        .pagination-last {
+            background-color: black;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .pagination-prev:disabled,
+        .pagination-first:disabled,
+        .pagination-next:disabled,
+        .pagination-last:disabled {
+            background-color: transparent;
+            border: 1px solid black;
+        }
+
+        .pagination-prev svg,
+        .pagination-first svg,
+        .pagination-next svg,
+        .pagination-last svg {
+            fill: white;
+        }
+
+        .pagination-prev:disabled svg,
+        .pagination-first:disabled svg,
+        .pagination-next:disabled svg,
+        .pagination-last:disabled svg {
+            fill: black;
+        }
+    </style>
 </head>
+
 <body>
     <button id="logoutBtn">Logout</button>
     <h1>Hello Pagination</h1>
@@ -26,4 +104,5 @@
     </div>
     <script type="module" src="../pagination/js/dashboard.js"></script>
 </body>
+
 </html>

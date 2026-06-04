@@ -44,6 +44,9 @@ iv) Create db.php, config.php and jwt.php
 
 v) Create register.php and login.php
 
+vi) Create refresh.php, jwt.php in auth and in middleware: verify.php 
+
+
 
 
 
