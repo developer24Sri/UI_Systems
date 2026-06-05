@@ -1,4 +1,5 @@
 import { EmployeeTable } from "./pagination.js";
+import { Search } from "./search.js";
 
 const table = new EmployeeTable({
     tableBody: "#employeeTableBody",
@@ -6,6 +7,14 @@ const table = new EmployeeTable({
     summaryContainer: "#summaryContainer",
     pageSize: "#pageSize",
     pageSizeOptions: [5,10,15,20,25]
+})
+
+const search = new Search({
+    input: "#search",
+    delay: 300,
+    onSearch: (value) => {
+        table.handleSearch(value);
+    }
 })
 
 table.init();

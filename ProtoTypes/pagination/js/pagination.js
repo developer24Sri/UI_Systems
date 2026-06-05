@@ -4,6 +4,7 @@ export class EmployeeTable {
     // 1.set your initialStates
     #currentPage = 1;
     #limit = 5;
+    #searchTerm = "";
 
     #employees = [];
     #pagination = {};
@@ -23,6 +24,7 @@ export class EmployeeTable {
         this.pageSizeOptions = pageSizeOptions;
     }
 
+    // 0. 
     async init() {
         this.bindEvents();
         await this.loadEmployees();
@@ -34,7 +36,7 @@ export class EmployeeTable {
 
     // 2. Get the required data's Via API(external) and store it in our states
     async loadEmployees() {
-        const response = await apiService.get(`/protected/employees-show.php?page=${this.#currentPage}&limit=${this.#limit}`)
+        const response = await apiService.get(`/protected/employees-show.php?page=${this.#currentPage}&limit=${this.#limit}&search=${encodeURIComponent(this.#searchTerm)}`)
         this.#employees = response.data;
         this.#pagination = response.pagination;
     }
@@ -42,6 +44,18 @@ export class EmployeeTable {
     // 3. Render the data inside the table
     renderTable() {
         this.tableBody.innerHTML = "";
+        // fallback if there is no employee data
+        if (this.#employees.length === 0) {
+            this.tableBody.innerHTML = `
+            <tr>
+                <td colspan="4">
+                    No employees found
+                </td>
+            </tr>
+            `;
+            return;
+        }
+
         this.#employees.forEach(employee => {
             this.tableBody.insertAdjacentHTML(
                 "beforeend",
@@ -97,9 +111,13 @@ export class EmployeeTable {
 
     // 6. to render the record summary of the employees:
     renderSummary() {
+        if(this.#employees.length === 0) {
+            this.summaryContainer.textContent = `No Records found!`
+            return;
+        }
         const startText = ((this.#currentPage - 1) * this.#limit) + 1;
         const endText = Math.min(this.#currentPage * this.#limit, this.#pagination.totalRecords);
-        this.summaryContainer.textContent = `Showing ${startText} to ${endText} from ${this.#pagination.totalRecords} records.`
+        this.summaryContainer.textContent = `Showing ${startText} to ${endText} rows from ${this.#pagination.totalRecords} records.`
     }
 
     // 7. i) to render the page size select element:
@@ -118,7 +136,7 @@ export class EmployeeTable {
         this.pageSize.value = this.#limit;
     }
 
-    // 7. ii) to handle the 
+    // 7. ii) to handle the entire component when changes made based on page limit:
     async handlePageSizeChange(limit) {
         this.#limit = limit;
         this.#currentPage = 1;
@@ -131,6 +149,18 @@ export class EmployeeTable {
     // 5 i) Navigate through pages using the currentPage what we get:
     async handlePageChange(page) {
         this.#currentPage = page;
+        await this.loadEmployees();
+        this.renderTable();
+        this.renderPagination();
+        this.renderSummary();
+
+    }
+
+    // 8. to handle the entire component when changes made based on user search:
+    async handleSearch(searchTerm) {
+        this.#searchTerm = searchTerm;
+        this.#currentPage = 1;
+        // console.log(this.#searchTerm);
         await this.loadEmployees();
         this.renderTable();
         this.renderPagination();
@@ -176,5 +206,5 @@ export class EmployeeTable {
             }
         )
     }
-
 }
+

@@ -22,6 +22,10 @@ $limit = isset($_GET["limit"])
     ? (int)$_GET["limit"]
     : 5;
 
+$search = isset($_GET["search"])
+    ? trim($_GET["search"])
+    : "";
+
 if ($page < 1) {
     $page = 1;
 }
@@ -34,12 +38,23 @@ $offset = ($page - 1) * $limit;
 
 /* Total employee count */
 
-$countResult = $conn->query("
+$countStmt = $conn->prepare("
     SELECT COUNT(*) AS total
     FROM employees
+    WHERE name LIKE ?
 ");
 
-$totalEmployees = $countResult
+$searchTerm = "%{$search}%";
+
+$countStmt->bind_param(
+    "s",
+    $searchTerm
+);
+
+$countStmt->execute();
+
+$totalEmployees = $countStmt
+    ->get_result()
     ->fetch_assoc()["total"];
 
 /* Paginated employees */
@@ -47,12 +62,14 @@ $totalEmployees = $countResult
 $stmt = $conn->prepare("
     SELECT *
     FROM employees
+    WHERE name LIKE ?
     LIMIT ?
     OFFSET ?
 ");
 
 $stmt->bind_param(
-    "ii",
+    "sii",
+    $searchTerm,
     $limit,
     $offset
 );
