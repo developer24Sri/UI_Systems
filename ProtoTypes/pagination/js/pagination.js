@@ -5,8 +5,10 @@ export class EmployeeTable {
     #currentPage = 1;
     #limit = 5;
     #searchTerm = "";
+    #selectedDepartment = "";
 
     #employees = [];
+    #departments = [];
     #pagination = {};
 
     constructor({
@@ -14,7 +16,8 @@ export class EmployeeTable {
         paginationContainer,
         summaryContainer,
         pageSize,
-        pageSizeOptions
+        pageSizeOptions,
+        departmentFilter
     }) {
         // 2. Get the required data's Via API(internal i.e JS)
         this.tableBody = document.querySelector(tableBody);
@@ -22,23 +25,33 @@ export class EmployeeTable {
         this.summaryContainer = document.querySelector(summaryContainer);
         this.pageSize = document.querySelector(pageSize);
         this.pageSizeOptions = pageSizeOptions;
+        this.departmentFilter = document.querySelector(departmentFilter);
     }
 
     // 0. 
     async init() {
         this.bindEvents();
         await this.loadEmployees();
+        await this.loadDepartments();
         this.renderTable();
         this.renderPagination();
         this.renderSummary();
         this.renderPageSizeSelector();
+        this.renderDepartmentFilter();
     }
 
     // 2. Get the required data's Via API(external) and store it in our states
     async loadEmployees() {
-        const response = await apiService.get(`/protected/employees-show.php?page=${this.#currentPage}&limit=${this.#limit}&search=${encodeURIComponent(this.#searchTerm)}`)
+        const response = await apiService.get(`/protected/employees-show.php?page=${this.#currentPage}&limit=${this.#limit}&search=${encodeURIComponent(this.#searchTerm)}&department=${encodeURIComponent(this.#selectedDepartment)}`)
         this.#employees = response.data;
         this.#pagination = response.pagination;
+    }
+
+    // 9. load departments to get the departments name:
+    async loadDepartments() {
+        const response = await apiService.get("/protected/get-department.php")
+        this.#departments = response.data;
+        console.log(this.#departments);
     }
 
     // 3. Render the data inside the table
@@ -145,17 +158,7 @@ export class EmployeeTable {
         this.renderPagination();
         this.renderSummary();
     }
-
-    // 5 i) Navigate through pages using the currentPage what we get:
-    async handlePageChange(page) {
-        this.#currentPage = page;
-        await this.loadEmployees();
-        this.renderTable();
-        this.renderPagination();
-        this.renderSummary();
-
-    }
-
+    
     // 8. to handle the entire component when changes made based on user search:
     async handleSearch(searchTerm) {
         this.#searchTerm = searchTerm;
@@ -165,6 +168,43 @@ export class EmployeeTable {
         this.renderTable();
         this.renderPagination();
         this.renderSummary();
+    }
+
+    // 9. i) to render the deparments select element:
+    renderDepartmentFilter() {
+        this.departmentFilter.innerHTML = 
+        `<option value="">All</option>
+        `
+        this.#departments.forEach(department => {
+            this.departmentFilter.insertAdjacentHTML(
+            "beforeend",
+            `
+            <option value="${department}">
+            ${department}
+            </option>
+            `
+        )
+        })
+    }
+
+    // 9. ii) to hande the entire component when changes made based on department filter:
+    async handleDepartmentChange(department) {
+        this.#selectedDepartment = department;
+        this.#currentPage = 1;
+        await this.loadEmployees();
+        this.renderTable();
+        this.renderPagination();
+        this.renderSummary();
+    }
+
+    // 5 i) Navigate through pages using the currentPage what we get:
+    async handlePageChange(page) {
+        this.#currentPage = page;
+        await this.loadEmployees();
+        this.renderTable();
+        this.renderPagination();
+        this.renderSummary();
+
     }
 
     // 5 ii) just click the button get the dataset from the button and send it to the handlePage
@@ -203,6 +243,14 @@ export class EmployeeTable {
             async (event) => {
                 const limit = Number(event.target.value);
                 await this.handlePageSizeChange(limit);
+            }
+        )
+        this.departmentFilter.addEventListener(
+            "change",
+            async(event) => {
+                await this.handleDepartmentChange(
+                    event.target.value
+                )
             }
         )
     }

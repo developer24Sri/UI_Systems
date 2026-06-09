@@ -26,6 +26,10 @@ $search = isset($_GET["search"])
     ? trim($_GET["search"])
     : "";
 
+$department = isset($_GET["department"])
+    ? trim($_GET["department"])
+    : "";
+
 if ($page < 1) {
     $page = 1;
 }
@@ -42,13 +46,16 @@ $countStmt = $conn->prepare("
     SELECT COUNT(*) AS total
     FROM employees
     WHERE name LIKE ?
+    AND (? = '' OR department = ?)
 ");
 
 $searchTerm = "%{$search}%";
 
 $countStmt->bind_param(
-    "s",
-    $searchTerm
+    "sss",
+    $searchTerm,
+    $department,
+    $department
 );
 
 $countStmt->execute();
@@ -63,13 +70,16 @@ $stmt = $conn->prepare("
     SELECT *
     FROM employees
     WHERE name LIKE ?
+    AND (? = '' OR department = ?)
     LIMIT ?
     OFFSET ?
 ");
 
 $stmt->bind_param(
-    "sii",
+    "sssii",
     $searchTerm,
+    $department,
+    $department,
     $limit,
     $offset
 );
