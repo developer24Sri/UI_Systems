@@ -258,3 +258,5 @@ where it first updates the limit what we bring from bindEvents, then everytime w
 next we have once again loadEmp, renderTable, renderPagination and renderSummary.
 
 xi) next is search field so as we have already done the debounced techniuq seperately hear we gone a merge it and want's to keep as an seperate component so for that create an seperate file where we gone setup the basic class Search and its related consturctor that are input, onSearch and the delay what we want then assigning with the this values as an obj then our debounce logic  
+
+xii) next is filter by department so first we need to get an create an API for it and need to modify our existing API also bcos as we gone create it as an filter we required to fetch the existing departments first in the DB and based on that we need to render the select element and so while clicking the required dep using our updated exisiting API which is like this }&department=${encodeURIComponent(this.#selectedDepartment)} where we send the depeartment name alone so in the DB it will check and send us back the res of required matching department based pagination data for us which we render it using the init

@@ -7,7 +7,8 @@ const table = new EmployeeTable({
     summaryContainer: "#summaryContainer",
     pageSize: "#pageSize",
     pageSizeOptions: [5,10,15,20,25],
-    departmentFilter: "#departmentFilter"
+    departmentFilter: "#departmentFilter",
+    tableHead: "thead",
 })
 
 const search = new Search({

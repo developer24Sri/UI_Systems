@@ -6,6 +6,8 @@ export class EmployeeTable {
     #limit = 5;
     #searchTerm = "";
     #selectedDepartment = "";
+    #sortBy = "";
+    #sortOrder = "ASC";
 
     #employees = [];
     #departments = [];
@@ -17,7 +19,8 @@ export class EmployeeTable {
         summaryContainer,
         pageSize,
         pageSizeOptions,
-        departmentFilter
+        departmentFilter,
+        tableHead
     }) {
         // 2. Get the required data's Via API(internal i.e JS)
         this.tableBody = document.querySelector(tableBody);
@@ -26,9 +29,10 @@ export class EmployeeTable {
         this.pageSize = document.querySelector(pageSize);
         this.pageSizeOptions = pageSizeOptions;
         this.departmentFilter = document.querySelector(departmentFilter);
+        this.tableHead = document.querySelector(tableHead);
     }
 
-    // 0. 
+    // 0. loads all the inital render's and data's related to it.
     async init() {
         this.bindEvents();
         await this.loadEmployees();
@@ -42,7 +46,8 @@ export class EmployeeTable {
 
     // 2. Get the required data's Via API(external) and store it in our states
     async loadEmployees() {
-        const response = await apiService.get(`/protected/employees-show.php?page=${this.#currentPage}&limit=${this.#limit}&search=${encodeURIComponent(this.#searchTerm)}&department=${encodeURIComponent(this.#selectedDepartment)}`)
+        const response = await apiService.get(
+            `/protected/employees-show.php?page=${this.#currentPage}&limit=${this.#limit}&search=${encodeURIComponent(this.#searchTerm)}&department=${encodeURIComponent(this.#selectedDepartment)}&sortBy=${this.#sortBy}&sortOrder=${this.#sortOrder}`)
         this.#employees = response.data;
         this.#pagination = response.pagination;
     }
@@ -51,7 +56,7 @@ export class EmployeeTable {
     async loadDepartments() {
         const response = await apiService.get("/protected/get-department.php")
         this.#departments = response.data;
-        console.log(this.#departments);
+        // console.log(this.#departments);
     }
 
     // 3. Render the data inside the table
@@ -124,7 +129,7 @@ export class EmployeeTable {
 
     // 6. to render the record summary of the employees:
     renderSummary() {
-        if(this.#employees.length === 0) {
+        if (this.#employees.length === 0) {
             this.summaryContainer.textContent = `No Records found!`
             return;
         }
@@ -158,7 +163,7 @@ export class EmployeeTable {
         this.renderPagination();
         this.renderSummary();
     }
-    
+
     // 8. to handle the entire component when changes made based on user search:
     async handleSearch(searchTerm) {
         this.#searchTerm = searchTerm;
@@ -172,24 +177,39 @@ export class EmployeeTable {
 
     // 9. i) to render the deparments select element:
     renderDepartmentFilter() {
-        this.departmentFilter.innerHTML = 
-        `<option value="">All</option>
+        this.departmentFilter.innerHTML =
+            `<option value="">All</option>
         `
         this.#departments.forEach(department => {
             this.departmentFilter.insertAdjacentHTML(
-            "beforeend",
-            `
+                "beforeend",
+                `
             <option value="${department}">
             ${department}
             </option>
             `
-        )
+            )
         })
     }
 
     // 9. ii) to hande the entire component when changes made based on department filter:
     async handleDepartmentChange(department) {
         this.#selectedDepartment = department;
+        this.#currentPage = 1;
+        await this.loadEmployees();
+        this.renderTable();
+        this.renderPagination();
+        this.renderSummary();
+    }
+
+    // 10 i) 
+    async handleSort(column) {
+        if(this.#sortBy === column) {
+            this.#sortOrder = this.#sortOrder === "ASC" ? "DESC" : "ASC";
+        } else {
+            this.#sortBy = column;
+            this.#sortOrder = "ASC";
+        }
         this.#currentPage = 1;
         await this.loadEmployees();
         this.renderTable();
@@ -247,10 +267,18 @@ export class EmployeeTable {
         )
         this.departmentFilter.addEventListener(
             "change",
-            async(event) => {
+            async (event) => {
                 await this.handleDepartmentChange(
                     event.target.value
                 )
+            }
+        )
+        this.tableHead.addEventListener(
+            "click",
+            async (event) => {
+                const column = event.target.dataset.sort;
+                if(!column) return;
+                await this.handleSort(column);
             }
         )
     }

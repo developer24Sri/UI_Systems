@@ -30,6 +30,20 @@ $department = isset($_GET["department"])
     ? trim($_GET["department"])
     : "";
 
+$sortBy = $_GET["sortBy"] ?? "id";
+$sortOrder = $_GET["sortOrder"] ?? "ASC";
+
+$allowedColumns = [
+    "id",
+    "employee_id",
+    "name",
+    "department"
+];
+
+if (!in_array($sortBy, $allowedColumns)) {
+    $sortBy = "id";
+}
+
 if ($page < 1) {
     $page = 1;
 }
@@ -64,16 +78,24 @@ $totalEmployees = $countStmt
     ->get_result()
     ->fetch_assoc()["total"];
 
+$sortOrder =
+    strtoupper($sortOrder) === "DESC"
+    ? "DESC"
+    : "ASC";
+
 /* Paginated employees */
 
-$stmt = $conn->prepare("
-    SELECT *
-    FROM employees
-    WHERE name LIKE ?
-    AND (? = '' OR department = ?)
-    LIMIT ?
-    OFFSET ?
-");
+$query = "
+SELECT *
+FROM employees
+WHERE name LIKE ?
+AND (? = '' OR department = ?)
+ORDER BY $sortBy $sortOrder
+LIMIT ?
+OFFSET ?
+";
+
+$stmt = $conn->prepare($query);
 
 $stmt->bind_param(
     "sssii",
