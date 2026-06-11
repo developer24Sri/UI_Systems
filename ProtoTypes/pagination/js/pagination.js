@@ -12,6 +12,9 @@ export class EmployeeTable {
     #employees = [];
     #departments = [];
     #pagination = {};
+    #isLoading = false;
+    #isError = false;
+    #error = null;
 
     constructor({
         tableBody,
@@ -20,7 +23,7 @@ export class EmployeeTable {
         pageSize,
         pageSizeOptions,
         departmentFilter,
-        tableHead
+        tableHead,
     }) {
         // 2. Get the required data's Via API(internal i.e JS)
         this.tableBody = document.querySelector(tableBody);
@@ -32,24 +35,41 @@ export class EmployeeTable {
         this.tableHead = document.querySelector(tableHead);
     }
 
-    // 0. loads all the inital render's and data's related to it.
+    // 0. i) loads all the inital render's and data's related to it.
     async init() {
         this.bindEvents();
-        await this.loadEmployees();
         await this.loadDepartments();
-        this.renderTable();
-        this.renderPagination();
-        this.renderSummary();
+        this.refreshUI();
         this.renderPageSizeSelector();
         this.renderDepartmentFilter();
     }
 
+    // 0. ii) A common method which almost requires where-ever the UI been updated:
+    async refreshUI() {
+        this.#isLoading = true;
+        this.renderTable();
+        this.renderPagination();
+        this.renderSummary();
+        await this.loadEmployees();
+        this.#isLoading = false;
+        this.renderTable();
+        this.renderPagination();
+        this.renderSummary();
+    }
+
     // 2. Get the required data's Via API(external) and store it in our states
     async loadEmployees() {
-        const response = await apiService.get(
-            `/protected/employees-show.php?page=${this.#currentPage}&limit=${this.#limit}&search=${encodeURIComponent(this.#searchTerm)}&department=${encodeURIComponent(this.#selectedDepartment)}&sortBy=${this.#sortBy}&sortOrder=${this.#sortOrder}`)
-        this.#employees = response.data;
-        this.#pagination = response.pagination;
+        try {
+            this.#isError = false;
+            this.#error = null;
+            const response = await apiService.get(
+                `/protected/employees-show.php?page=${this.#currentPage}&limit=${this.#limit}&search=${encodeURIComponent(this.#searchTerm)}&department=${encodeURIComponent(this.#selectedDepartment)}&sortBy=${this.#sortBy}&sortOrder=${this.#sortOrder}`)
+            this.#employees = response.data;
+            this.#pagination = response.pagination;
+        } catch (error) {
+            this.#isError = true;
+            this.#error = error?.message;
+        }
     }
 
     // 9. load departments to get the departments name:
@@ -63,30 +83,76 @@ export class EmployeeTable {
     renderTable() {
         this.tableBody.innerHTML = "";
         // fallback if there is no employee data
-        if (this.#employees.length === 0) {
+        if (this.#isLoading) {
             this.tableBody.innerHTML = `
             <tr>
                 <td colspan="4">
-                    No employees found
+                    Loading Employees...
                 </td>
             </tr>
             `;
             return;
+        } else if (this.#isError) {
+            this.tableBody.innerHTML = `
+                <tr>
+                    <td colspan="4">
+                        Error: ${this.#error}
+                    </td>
+                </tr>
+            `;
+            return;
+        } else if (this.#employees.length === 0) {
+            this.tableBody.innerHTML = `
+                <tr>
+                    <td colspan="4">
+                        No Employees found!
+                    </td>
+                </tr>
+                `;
+            return;
+        } else {
+            this.#employees.forEach(employee => {
+                this.tableBody.insertAdjacentHTML(
+                    "beforeend",
+                    `
+                        <tr>
+                        <td>${employee.id}</td>
+                        <td>${employee.employee_id}</td>
+                        <td>${employee.name}</td>
+                        <td>${employee.department}</td>
+                        </tr>
+                        `
+                )
+            })
+        }
+    }
+
+    // 10. smart pagination for admin dashboards:
+    getVisiblePages() {
+        const pages = [];
+        const totalPages = this.#pagination.totalPages;
+
+        pages.push(1);
+
+        if(this.#currentPage > 3) {
+            pages.push("...");
+        } 
+
+        for(let i = this.#currentPage - 1; i <= this.#currentPage + 1; i++) {
+            if(i > 1 && i < totalPages) {
+                pages.push(i);
+            }
         }
 
-        this.#employees.forEach(employee => {
-            this.tableBody.insertAdjacentHTML(
-                "beforeend",
-                `
-            <tr>
-            <td>${employee.id}</td>
-            <td>${employee.employee_id}</td>
-            <td>${employee.name}</td>
-            <td>${employee.department}</td>
-            </tr>
-            `
-            )
-        })
+        if(this.#currentPage < totalPages - 2) {
+            pages.push("...");
+        }
+
+        if(totalPages > 1) {
+            pages.push(totalPages);
+        }
+
+        return[...new Set(pages)];
     }
 
     // 4. render the pagination below the table
@@ -106,13 +172,35 @@ export class EmployeeTable {
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M204.24,203.76a6,6,0,1,1-8.48,8.48l-80-80a6,6,0,0,1,0-8.48l80-80a6,6,0,0,1,8.48,8.48L128.49,128ZM48.49,128l75.75-75.76a6,6,0,0,0-8.48-8.48l-80,80a6,6,0,0,0,0,8.48l80,80a6,6,0,1,0,8.48-8.48Z"/></svg>
             </button>`
         )
-        for (let i = 1; i <= this.#pagination.totalPages; i++) {
-            const activeClass = i === this.#currentPage ? "active" : "";
+        // for (let i = 1; i <= this.#pagination.totalPages; i++) {
+        //     const activeClass = i === this.#currentPage ? "active" : "";
+        //     this.paginationContainer.insertAdjacentHTML(
+        //         "beforeend",
+        //         `<button class="page-btn ${activeClass}" data-page="${i}">${i}</button>`
+        //     )
+        // }
+        const visiblePages = this.getVisiblePages();
+        visiblePages.forEach(page => {
+            if(page === "...") {
+                this.paginationContainer.insertAdjacentHTML(
+                    "beforeend",
+                    `<span>...</span>`
+                );
+                return;
+            }
+
+            const activeClass = page === this.#currentPage ? "active" : "";
+            console.log(page, this.#currentPage);
             this.paginationContainer.insertAdjacentHTML(
                 "beforeend",
-                `<button class="page-btn ${activeClass}" data-page="${i}">${i}</button>`
+                `
+                <button class="page-btn ${activeClass}" data-page="${page}">
+                    ${page} 
+                </button>
+                `
             )
-        }
+        })
+        
         this.paginationContainer.insertAdjacentHTML(
             "beforeend",
             `<button class="pagination-next" ${isLastPage ? "disabled" : ""}>
@@ -158,21 +246,14 @@ export class EmployeeTable {
     async handlePageSizeChange(limit) {
         this.#limit = limit;
         this.#currentPage = 1;
-        await this.loadEmployees();
-        this.renderTable();
-        this.renderPagination();
-        this.renderSummary();
+        await this.refreshUI();
     }
 
     // 8. to handle the entire component when changes made based on user search:
     async handleSearch(searchTerm) {
         this.#searchTerm = searchTerm;
         this.#currentPage = 1;
-        // console.log(this.#searchTerm);
-        await this.loadEmployees();
-        this.renderTable();
-        this.renderPagination();
-        this.renderSummary();
+        await this.refreshUI()
     }
 
     // 9. i) to render the deparments select element:
@@ -196,35 +277,25 @@ export class EmployeeTable {
     async handleDepartmentChange(department) {
         this.#selectedDepartment = department;
         this.#currentPage = 1;
-        await this.loadEmployees();
-        this.renderTable();
-        this.renderPagination();
-        this.renderSummary();
+        await this.refreshUI();
     }
 
-    // 10 i) 
+    // 10 to render the table based on what sort the current state is on:
     async handleSort(column) {
-        if(this.#sortBy === column) {
+        if (this.#sortBy === column) {
             this.#sortOrder = this.#sortOrder === "ASC" ? "DESC" : "ASC";
         } else {
             this.#sortBy = column;
             this.#sortOrder = "ASC";
         }
         this.#currentPage = 1;
-        await this.loadEmployees();
-        this.renderTable();
-        this.renderPagination();
-        this.renderSummary();
+        await this.refreshUI();
     }
 
     // 5 i) Navigate through pages using the currentPage what we get:
     async handlePageChange(page) {
         this.#currentPage = page;
-        await this.loadEmployees();
-        this.renderTable();
-        this.renderPagination();
-        this.renderSummary();
-
+        await this.refreshUI();
     }
 
     // 5 ii) just click the button get the dataset from the button and send it to the handlePage
@@ -277,7 +348,7 @@ export class EmployeeTable {
             "click",
             async (event) => {
                 const column = event.target.dataset.sort;
-                if(!column) return;
+                if (!column) return;
                 await this.handleSort(column);
             }
         )
