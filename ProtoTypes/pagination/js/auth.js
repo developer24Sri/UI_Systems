@@ -20,7 +20,7 @@ export async function login(username, password) {
 }
 
 /* REGISTER */
-export async function register(username,email,password) {
+export async function register(username, email, password) {
     const response = await apiService.post("/auth/register.php", {
         username,
         email,
@@ -33,4 +33,5 @@ export async function register(username,email,password) {
 
     return response;
 }
+
 
