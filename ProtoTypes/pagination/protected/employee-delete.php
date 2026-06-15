@@ -29,9 +29,7 @@ $data = json_decode(
 
 /* Validation */
 
-$id = isset($data["id"])
-    ? (int)$data["id"]
-    : 0;
+$id = (int)($_GET["id"] ?? 0);
 
 if ($id <= 0) {
     http_response_code(400);

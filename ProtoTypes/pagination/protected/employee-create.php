@@ -9,7 +9,7 @@ header("Content-Type: application/json");
 $user = verifyToken();
 
 /* Admin Only */
-if($user->role !== "admin") {
+if($user["role"] !== "admin") {
     http_response_code(403);
 
     echo json_encode([

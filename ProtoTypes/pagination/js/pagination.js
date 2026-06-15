@@ -4,11 +4,11 @@ export class EmployeeTable {
     // 1.set your initialStates
     #currentPage = 1;
     #limit = 5;
+    #user = "";
     #searchTerm = "";
     #selectedDepartment = "";
     #sortBy = "";
     #sortOrder = "ASC";
-
     #employees = [];
     #departments = [];
     #pagination = {};
@@ -35,9 +35,34 @@ export class EmployeeTable {
         this.tableHead = document.querySelector(tableHead);
     }
 
+    // HELPERS METHODS:
+    async loadCurrentUser() {
+        const response = await apiService.get(
+            "/protected/profile.php"
+        );
+        this.#user = response.data;
+    }
+
+    isAdmin() {
+        return this.#user?.role === "admin";
+    }
+
+    updateTableColumns() {
+        const actionColumn =
+            document.querySelector("#actionColumn");
+
+        if (this.#user.role !== "admin") {
+            actionColumn.style.display = "none";
+        }
+    }
+
+    /*================================================================================================================================================================================================================================*/
+
     // 0. i) loads all the inital render's and data's related to it.
     async init() {
         this.bindEvents();
+        await this.loadCurrentUser();
+        this.updateTableColumns();
         await this.loadDepartments();
         this.refreshUI();
         this.renderPageSizeSelector();
@@ -120,6 +145,16 @@ export class EmployeeTable {
                         <td>${employee.employee_id}</td>
                         <td>${employee.name}</td>
                         <td>${employee.department}</td>
+                        ${this.#user.role === "admin"
+                        ?
+                        `
+                            <td>
+                                 <button class="delete-btn" data-id="${employee.id}">Delete</button>
+                            </td>
+                            `
+                        :
+                        ""
+                    }
                         </tr>
                         `
                 )
@@ -134,25 +169,25 @@ export class EmployeeTable {
 
         pages.push(1);
 
-        if(this.#currentPage > 3) {
+        if (this.#currentPage > 3) {
             pages.push("...");
-        } 
+        }
 
-        for(let i = this.#currentPage - 1; i <= this.#currentPage + 1; i++) {
-            if(i > 1 && i < totalPages) {
+        for (let i = this.#currentPage - 1; i <= this.#currentPage + 1; i++) {
+            if (i > 1 && i < totalPages) {
                 pages.push(i);
             }
         }
 
-        if(this.#currentPage < totalPages - 2) {
+        if (this.#currentPage < totalPages - 2) {
             pages.push("...");
         }
 
-        if(totalPages > 1) {
+        if (totalPages > 1) {
             pages.push(totalPages);
         }
 
-        return[...new Set(pages)];
+        return [...new Set(pages)];
     }
 
     // 4. render the pagination below the table
@@ -181,7 +216,7 @@ export class EmployeeTable {
         // }
         const visiblePages = this.getVisiblePages();
         visiblePages.forEach(page => {
-            if(page === "...") {
+            if (page === "...") {
                 this.paginationContainer.insertAdjacentHTML(
                     "beforeend",
                     `<span>...</span>`
@@ -200,7 +235,7 @@ export class EmployeeTable {
                 `
             )
         })
-        
+
         this.paginationContainer.insertAdjacentHTML(
             "beforeend",
             `<button class="pagination-next" ${isLastPage ? "disabled" : ""}>
@@ -292,6 +327,29 @@ export class EmployeeTable {
         await this.refreshUI();
     }
 
+    // CRUD operations:
+    // DELETE:
+    async handleDelete(employeeId) {
+        // console.log(employeeId);
+        const confirmed = confirm("Are you sure to delete this employee ?")
+        if (!confirmed) return;
+        try {
+            await apiService.delete(`/protected/employee-delete.php?id=${employeeId}`);
+            // to hadle the edge case of last record been deleted in the currentPage which should not show no employees found.
+            if (
+                this.#employees.length === 1 &&
+                this.#currentPage > 1
+            ) {
+                this.#currentPage--;
+            }
+            await this.refreshUI();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    /*==============================================================================================================================================================================================================================================*/
+
     // 5 i) Navigate through pages using the currentPage what we get:
     async handlePageChange(page) {
         this.#currentPage = page;
@@ -329,29 +387,29 @@ export class EmployeeTable {
             const page = Number(button.dataset.page);
             await this.handlePageChange(page);
         })
-        this.pageSize.addEventListener(
-            "change",
-            async (event) => {
-                const limit = Number(event.target.value);
-                await this.handlePageSizeChange(limit);
-            }
+        this.pageSize.addEventListener("change", async (event) => {
+            const limit = Number(event.target.value);
+            await this.handlePageSizeChange(limit);
+        }
         )
-        this.departmentFilter.addEventListener(
-            "change",
-            async (event) => {
-                await this.handleDepartmentChange(
-                    event.target.value
-                )
-            }
+        this.departmentFilter.addEventListener("change", async (event) => {
+            await this.handleDepartmentChange(
+                event.target.value
+            )
+        }
         )
-        this.tableHead.addEventListener(
-            "click",
-            async (event) => {
-                const column = event.target.dataset.sort;
-                if (!column) return;
-                await this.handleSort(column);
-            }
+        this.tableHead.addEventListener("click", async (event) => {
+            const column = event.target.dataset.sort;
+            if (!column) return;
+            await this.handleSort(column);
+        }
         )
+        this.tableBody.addEventListener("click", async (event) => {
+            const deleteButton = event.target.closest(".delete-btn");
+            if (!deleteButton) return;
+            const employeeId = deleteButton.dataset.id;
+            await this.handleDelete(employeeId);
+        })
     }
 }
 
