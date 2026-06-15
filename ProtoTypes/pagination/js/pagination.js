@@ -44,7 +44,7 @@ export class EmployeeTable {
         this.renderDepartmentFilter();
     }
 
-    // 0. ii) A common method which almost requires where-ever the UI been updated:
+    // 0. ii) A common method which almost requires where-ever the API data needs to load and UI needs to render:
     async refreshUI() {
         this.#isLoading = true;
         this.renderTable();
@@ -134,25 +134,25 @@ export class EmployeeTable {
 
         pages.push(1);
 
-        if(this.#currentPage > 3) {
+        if (this.#currentPage > 3) {
             pages.push("...");
-        } 
+        }
 
-        for(let i = this.#currentPage - 1; i <= this.#currentPage + 1; i++) {
-            if(i > 1 && i < totalPages) {
+        for (let i = this.#currentPage - 1; i <= this.#currentPage + 1; i++) {
+            if (i > 1 && i < totalPages) {
                 pages.push(i);
             }
         }
 
-        if(this.#currentPage < totalPages - 2) {
+        if (this.#currentPage < totalPages - 2) {
             pages.push("...");
         }
 
-        if(totalPages > 1) {
+        if (totalPages > 1) {
             pages.push(totalPages);
         }
 
-        return[...new Set(pages)];
+        return [...new Set(pages)];
     }
 
     // 4. render the pagination below the table
@@ -160,37 +160,31 @@ export class EmployeeTable {
         this.paginationContainer.innerHTML = "";
         const isFirstPage = this.#currentPage === 1;
         const isLastPage = this.#currentPage === this.#pagination.totalPages;
+        // prev button icon:
         this.paginationContainer.insertAdjacentHTML(
             "afterbegin",
             `<button class="pagination-prev" ${isFirstPage ? "disabled" : ""}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M164.24,203.76a6,6,0,1,1-8.48,8.48l-80-80a6,6,0,0,1,0-8.48l80-80a6,6,0,0,1,8.48,8.48L88.49,128Z"/></svg>
             </button>`
         )
+        // jump to start icon:
         this.paginationContainer.insertAdjacentHTML(
             "afterbegin",
             `<button class="pagination-first" ${isFirstPage ? "disabled" : ""}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M204.24,203.76a6,6,0,1,1-8.48,8.48l-80-80a6,6,0,0,1,0-8.48l80-80a6,6,0,0,1,8.48,8.48L128.49,128ZM48.49,128l75.75-75.76a6,6,0,0,0-8.48-8.48l-80,80a6,6,0,0,0,0,8.48l80,80a6,6,0,1,0,8.48-8.48Z"/></svg>
             </button>`
         )
-        // for (let i = 1; i <= this.#pagination.totalPages; i++) {
-        //     const activeClass = i === this.#currentPage ? "active" : "";
-        //     this.paginationContainer.insertAdjacentHTML(
-        //         "beforeend",
-        //         `<button class="page-btn ${activeClass}" data-page="${i}">${i}</button>`
-        //     )
-        // }
+        // visible pages with smart pagination
         const visiblePages = this.getVisiblePages();
         visiblePages.forEach(page => {
-            if(page === "...") {
+            if (page === "...") {
                 this.paginationContainer.insertAdjacentHTML(
                     "beforeend",
                     `<span>...</span>`
                 );
                 return;
             }
-
             const activeClass = page === this.#currentPage ? "active" : "";
-            console.log(page, this.#currentPage);
             this.paginationContainer.insertAdjacentHTML(
                 "beforeend",
                 `
@@ -200,13 +194,14 @@ export class EmployeeTable {
                 `
             )
         })
-        
+        // next button icon:
         this.paginationContainer.insertAdjacentHTML(
             "beforeend",
             `<button class="pagination-next" ${isLastPage ? "disabled" : ""}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M180.24,132.24l-80,80a6,6,0,0,1-8.48-8.48L167.51,128,91.76,52.24a6,6,0,0,1,8.48-8.48l80,80A6,6,0,0,1,180.24,132.24Z"/></svg>
                 </button>`
         )
+        // jump to last icon:
         this.paginationContainer.insertAdjacentHTML(
             "beforeend",
             ` <button class="pagination-last" ${isLastPage ? "disabled" : ""}>
